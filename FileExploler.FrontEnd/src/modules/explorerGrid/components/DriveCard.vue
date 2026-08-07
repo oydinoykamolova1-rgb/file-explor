@@ -1,41 +1,61 @@
 <template>
-
-  <div class="transparent-shadow-on card-round" @click="emit('onFetchDriveEntries', drive.path)">
-
-    <div class="p-2 px-4 flex flex-col items-center justify-center">
-
-      <!-- Drive header -->
-      <div class="relative">
-        <img src="../../../assets/icons/folder-admin.svg" alt="Drive icon" class="grid-icon">
-        <h5 class="absolute top-1/2 left-1/3 transform -translate-x-1/2 -translate-y-1/2 text-slate-300">
-          {{ drive.name }}</h5>
+  <div 
+    class="transparent-shadow-on card-round p-4 cursor-pointer group flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40"
+    @click="handleDriveClick"
+  >
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-3">
+      <div class="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 group-hover:text-emerald-300 group-hover:bg-emerald-900/60 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14M5 12a2 2 2 0 01-2-2V6a2 2 2 0 012-2h14a2 2 2 0 012 2v4a2 2 2 0 01-2 2M5 12a2 2 2 0 00-2 2v4a2 2 2 0 002 2h14a2 2 2 0 002-2v-4a2 2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+        </svg>
       </div>
-
-      <!-- Drive Details -->
-      <div class="w-full h-full">
-
-        <!-- Drive space chart -->
-        <canvas ref="chart" width="200" height="200"></canvas>
-
-        <!-- Drive space details -->
-        <p>Name : {{ drive.name }}</p>
-        <p v-if="drive.usedSpace > 0">Used space : {{ drive.usedSpace }}</p>
-        <p v-if="drive.freeSpace > 0">Free space : {{ drive.freeSpace }}</p>
-        <p v-if="drive.unavailableSpace > 0">Unavailable space : {{ drive.unavailableSpace }}</p>
-        <p>Drive type : {{ drive.type }}</p>
+      <div class="overflow-hidden">
+        <h4 class="font-semibold text-emerald-100 group-hover:text-emerald-300 transition-colors truncate text-base">
+          {{ drive.name || drive.path }}
+        </h4>
+        <span class="text-xs text-emerald-400/70 uppercase tracking-wider font-mono">
+          {{ drive.type || 'Local Drive' }}
+        </span>
       </div>
-
     </div>
 
+    <!-- Chart & Details -->
+    <div class="flex items-center gap-4">
+      <div class="w-20 h-20 relative flex-shrink-0">
+        <canvas ref="chartCanvas" width="80" height="80"></canvas>
+      </div>
+      <div class="flex-1 space-y-1 text-xs font-mono">
+        <div class="flex justify-between text-emerald-200">
+          <span class="text-emerald-400/80">Used:</span>
+          <span>{{ explorerLocationService.getFileSizeString(drive.usedSpace) }}</span>
+        </div>
+        <div class="flex justify-between text-emerald-200">
+          <span class="text-emerald-400/80">Free:</span>
+          <span>{{ explorerLocationService.getFileSizeString(drive.freeSpace) }}</span>
+        </div>
+        <div class="w-full bg-emerald-950/60 rounded-full h-1.5 overflow-hidden mt-1 border border-emerald-900/30">
+          <div 
+            class="bg-gradient-to-r from-emerald-500 to-amber-500 h-full rounded-full transition-all duration-500" 
+            :style="{ width: `${usagePercentage}%` }"
+          ></div>
+        </div>
+      </div>
+    </div>
   </div>
-
 </template>
 
 <script lang="ts" setup>
-
-import { Chart, ChartItem, DoughnutController, ArcElement } from "chart.js";
-import { onMounted, ref } from "vue";
+import { Chart, ChartItem, DoughnutController, ArcElement, Tooltip } from "chart.js";
+import { onMounted, ref, computed } from "vue";
 import type { StorageDrive } from "@/infrastructure/models/entities/StorageDrive";
+import { ExplorerLocationService } from "@/infrastructure/services/explorerLocationService";
+import { useExplorerStore } from "@/common/stores/ExplorerStore";
+
+Chart.register(ArcElement, DoughnutController, Tooltip);
+
+const explorerLocationService = new ExplorerLocationService();
+const explorerStore = useExplorerStore();
 
 const props = defineProps({
   drive: {
@@ -45,45 +65,51 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  onFetchDriveEntries: [driveName: string]
+  onFetchDriveEntries: [drivePath: string]
 }>();
 
-Chart.register(ArcElement);
-Chart.register(DoughnutController);
+const chartCanvas = ref<ChartItem>();
 
-const chart = ref<ChartItem>();
+const usagePercentage = computed(() => {
+  if (!props.drive.totalSpace) return 0;
+  return Math.min(100, Math.round((props.drive.usedSpace / props.drive.totalSpace) * 100));
+});
 
-const chartData = {
-  // Chart data goes here
-};
-const chartOptions = {
-  // Chart options go here
+const handleDriveClick = () => {
+  emit("onFetchDriveEntries", props.drive.path);
+  explorerStore.setCurrentPath(props.drive.path);
 };
 
 onMounted(() => {
   renderChart();
-})
+});
 
 const renderChart = () => {
-  const test = new Chart(chart.value as ChartItem, {
+  if (!chartCanvas.value) return;
+
+  const chartData = {
+    labels: ['Used Space', 'Free Space', 'Unavailable'],
+    datasets: [
+      {
+        data: [props.drive?.usedSpace || 0, props.drive?.freeSpace || 0, props.drive?.unavailableSpace || 0],
+        backgroundColor: ['#10b981', '#064e3b', '#334155'],
+        hoverOffset: 2,
+        borderWidth: 0
+      }
+    ]
+  };
+
+  new Chart(chartCanvas.value as ChartItem, {
     type: 'doughnut',
-    data: data,
-  });
-}
-
-const data = {
-  labels: ['Red', 'Orange', 'Yellow', 'Green', 'Blue'],
-  datasets: [
-    {
-      label: 'Dataset 1',
-      data: [props.drive?.usedSpace, props.drive.freeSpace, props.drive?.unavailableSpace],
-      backgroundColor: ['#629555', '#0475c9', '#5a5d61'],
-      hoverOffset: 4,
-      borderWidth: 0
+    data: chartData,
+    options: {
+      cutout: '72%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: { enabled: true }
+      }
     }
-  ]
+  });
 };
-
-
-
 </script>

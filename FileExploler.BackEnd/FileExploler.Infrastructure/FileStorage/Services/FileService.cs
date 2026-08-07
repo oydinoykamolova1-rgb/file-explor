@@ -1,4 +1,4 @@
-﻿using FileExploler.Application.Common.Models.Filtering;
+using FileExploler.Application.Common.Models.Filtering;
 using FileExploler.Application.FileStorage.Brokers;
 using FileExploler.Application.FileStorage.Models.Filtering;
 using FileExploler.Application.FileStorage.Models.Settings;
@@ -54,7 +54,34 @@ public class FileService : IFileService
     public StorageFileType GetFileType(string filePath)
     {
         var fileExtension = Path.GetExtension(filePath).TrimStart('.');
-        var matchedFileType = _fileFilterSettings.FileExtensions.FirstOrDefault(extension => extension.Extensions.Contains(fileExtension));
+        var matchedFileType = _fileFilterSettings.FileExtensions.FirstOrDefault(extension => extension.Extensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase));
         return matchedFileType?.FileType ?? StorageFileType.Other;
+    }
+
+    public ValueTask<bool> DeleteFileAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentNullException(nameof(filePath));
+
+        _fileBroker.Delete(filePath);
+        return new ValueTask<bool>(true);
+    }
+
+    public ValueTask<StorageFile> CreateFileAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentNullException(nameof(filePath));
+
+        var created = _fileBroker.Create(filePath);
+        return new ValueTask<StorageFile>(created);
+    }
+
+    public ValueTask<Stream> GetFileStreamAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentNullException(nameof(filePath));
+
+        var stream = _fileBroker.GetStream(filePath);
+        return new ValueTask<Stream>(stream);
     }
 }

@@ -1,4 +1,4 @@
-﻿using FileExploler.Application.Common.Models.Filtering;
+using FileExploler.Application.Common.Models.Filtering;
 using System.Diagnostics;
 
 namespace FileExploler.Application.Common.Querying.Extensions;
@@ -13,11 +13,8 @@ public static class LinqExtensions
         return source.Skip((int)((paginationOptions.PageToken - 1) * paginationOptions.PageSize)).Take((int)paginationOptions.PageSize);
     }
 
-    public static IEnumerable<TSource> Applypagination<TSource>(this IEnumerable<TSource> source, FilterPagination paginationOptions)
+    public static IEnumerable<TSource> ApplyPagination<TSource>(this IEnumerable<TSource> source, FilterPagination paginationOptions)
     {
-        // var pageSize = paginationOptions.DynamicPageSize;
-        // return source.Skip((int)((paginationOptions.PageToken - 1) * pageSize)).Take((int)pageSize);
-
         return source.Skip((int)((paginationOptions.PageToken - 1) * paginationOptions.PageSize)).Take((int)paginationOptions.PageSize);
     }
 }

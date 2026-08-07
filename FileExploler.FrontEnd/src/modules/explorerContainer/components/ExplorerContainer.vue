@@ -1,117 +1,194 @@
 <template>
+  <div class="w-11/12 max-w-6xl h-[85vh] overflow-hidden rounded-2xl container-shadow flex flex-col relative">
 
-    <div
-        class="w-3/5 h-4/5 overflow-hidden rounded-xl container-shadow border border-slate-700">
+    <!-- Main Content Area -->
+    <div class="flex h-full w-full overflow-hidden">
+      <!-- Left Sidebar Action Section -->
+      <explorer-actions class="w-72 flex-shrink-0 section-shadow border-r border-emerald-900/20" />
 
-        <div v-if="isLoading">
-            <p>loading ...</p>
+      <!-- Right Main Grid Section -->
+      <div class="flex-1 flex flex-col h-full bg-[#0c1916]/80 overflow-hidden">
+        
+        <!-- Header Actions & Navigation Bar -->
+        <explorer-grid-actions 
+          @openCreateFolder="isCreateFolderOpen = true"
+          @uploadFile="handleUploadFile"
+        />
+
+        <!-- Loading State Indicator -->
+        <div v-if="isLoading" class="flex-1 flex flex-col items-center justify-center text-emerald-400 gap-3">
+          <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs font-mono tracking-wider">Loading items...</span>
         </div>
-        <div v-else class="flex h-full w-full">
-            <!-- Action section -->
-            <explorer-actions class="basis-1/3 section-shadow"/>
 
-            <div class="basis-2/3">
-
-                <!-- Grid actions section -->
-                <explorer-grid-actions/>
-
-                <horizontal-divider/>
-
-                <!-- Explorer Items section -->
-                <explorer-grid :grid-items="gridItems"/>
-            </div>
-        </div>
+        <!-- Main Explorer Items Grid -->
+        <explorer-grid 
+          v-else 
+          :grid-items="filteredGridItems"
+          @openFile="handleOpenFile"
+          @contextMenu="handleContextMenu"
+        />
+      </div>
     </div>
 
+    <!-- Create Folder Modal -->
+    <create-folder-modal
+      :is-open="isCreateFolderOpen"
+      @close="isCreateFolderOpen = false"
+      @create="handleCreateFolder"
+    />
+
+    <!-- Right-Click Context Menu -->
+    <context-menu
+      :is-open="contextMenuState.isOpen"
+      :x="contextMenuState.x"
+      :y="contextMenuState.y"
+      :item-type="contextMenuState.item?.entryType === StorageEntryType.File ? 'file' : 'directory'"
+      @close="contextMenuState.isOpen = false"
+      @action="handleContextMenuAction"
+    />
+
+  </div>
 </template>
 
 <script setup lang="ts">
-
 import ExplorerActions from "@/modules/explorerActions/components/ExplorerActions.vue";
 import ExplorerGrid from "@/modules/explorerGrid/components/ExplorerGrid.vue";
 import ExplorerGridActions from "@/modules/explorerGrid/components/ExplorerGridActions.vue";
+import CreateFolderModal from "@/modules/explorerGrid/components/CreateFolderModal.vue";
+import ContextMenu from "@/modules/explorerGrid/components/ContextMenu.vue";
 import { ExplorerApiClient } from "@/infrastructure/apiClients/ExplorerApiClient";
-import { onBeforeMount, ref, toRefs, watch } from "vue";
-import { StorageDriveEntryFilterModel } from "@/infrastructure/models/filtering/StorageDriveEntryFilterModel";
+import { onBeforeMount, ref, computed, watch } from "vue";
+import { StorageDirectoryEntryFilterModel } from "@/infrastructure/models/filtering/StorageDirectoryEntryFilterModel";
 import type { IStorageEntry } from "@/infrastructure/models/entities/IStorageEntry";
-import HorizontalDivider from "@/common/components/HorizontalDivider.vue";
+import { StorageEntryType } from "@/infrastructure/models/entities/StorageItemType";
+import type { StorageFile } from "@/infrastructure/models/entities/StorageFile";
+import type { StorageDirectory } from "@/infrastructure/models/entities/StorageDirectory";
 import { useExplorerStore } from "@/common/stores/ExplorerStore";
 import { storeToRefs } from "pinia";
-import { StorageFileFilterModel } from "@/infrastructure/models/filtering/StorageFileFilterModel";
 
 const explorerApiClient = new ExplorerApiClient();
 const explorerStore = useExplorerStore();
-const {currentPath, currentFilesFilterModel} = storeToRefs(explorerStore);
-
-onBeforeMount(() => {
-    loadGridItemsAsync();
-});
+const { currentPath, currentFilesFilterModel, searchQuery, refreshCounter } = storeToRefs(explorerStore);
 
 const gridItems = ref<Array<IStorageEntry>>([]);
 const isLoading = ref<boolean>(true);
+const isCreateFolderOpen = ref<boolean>(false);
 
-watch(currentPath, async () => {
-    if (currentPath)
-        await loadGridItemsAsync();
+const contextMenuState = ref({
+  isOpen: false,
+  x: 0,
+  y: 0,
+  item: null as IStorageEntry | null
+});
+
+onBeforeMount(() => {
+  loadGridItemsAsync();
+});
+
+watch([currentPath, refreshCounter], async () => {
+  await loadGridItemsAsync();
 });
 
 watch(currentFilesFilterModel, async () => {
-    if (currentFilesFilterModel)
-        await loadGridFilesAsync();
+  if (currentFilesFilterModel.value) {
+    await loadGridFilesAsync();
+  }
+});
+
+const filteredGridItems = computed(() => {
+  if (!searchQuery.value || !searchQuery.value.trim()) {
+    return gridItems.value;
+  }
+  const q = searchQuery.value.toLowerCase().trim();
+  return gridItems.value.filter(item => item.name && item.name.toLowerCase().includes(q));
 });
 
 const loadGridItemsAsync = async () => {
-    isLoading.value = true;
+  isLoading.value = true;
+  gridItems.value = [];
 
-    const filterModel = new StorageDriveEntryFilterModel(20, 1, true, true);
-    const entriesResponse = currentPath.value
-        ? await explorerApiClient.directories.getEntriesAsync(currentPath.value, filterModel)
-        : await explorerApiClient.directories.getRootEntriesAsync(filterModel);
-
+  if (!currentPath.value) {
+    // Root view → show all computer drives (C:, D:, ...)
+    const drivesResponse = await explorerApiClient.drives.getDrivesAsync();
+    if (drivesResponse.response) {
+      gridItems.value = drivesResponse.response as unknown as Array<IStorageEntry>;
+    }
+  } else {
+    // Directory view → show entries inside the selected path
+    const filterModel = new StorageDirectoryEntryFilterModel(200, 1, true, true);
+    const entriesResponse = await explorerApiClient.directories.getEntriesAsync(currentPath.value, filterModel);
     if (entriesResponse.response) {
-        gridItems.value.length = 0;
-        entriesResponse.response.forEach((item: IStorageEntry) => {
-            gridItems.value.push(item);
-        });
+      gridItems.value = entriesResponse.response;
     }
+  }
 
-    if (explorerStore.currentPath) {
-        const pathSegments = explorerStore.currentPath?.split('\\');
-
-        if (pathSegments[pathSegments.length - 1] === 'wwwroot')
-            explorerStore.resetCurrentPath();
-    }
-
-    isLoading.value = false;
+  isLoading.value = false;
 };
+
 
 const loadGridFilesAsync = async () => {
-    isLoading.value = true;
+  if (!currentFilesFilterModel.value) return;
+  isLoading.value = true;
+  gridItems.value = [];
 
-    const filterOptions = explorerStore.currentFilesFilterModel as StorageFileFilterModel;
-    const filesResponse = await explorerApiClient.files.getFilesByFilterAsync(filterOptions);
+  const filesResponse = await explorerApiClient.files.getFilesByFilterAsync(currentFilesFilterModel.value);
 
-    // const filterModel = new StorageDriveEntryFilterModel(20, 1, true, true);
-    // const entriesResponse = currentPath.value
-    //     ? await explorerApiClient.directories.getEntriesAsync(currentPath.value, filterModel)
-    //     : await explorerApiClient.directories.getRootEntriesAsync(filterModel);
+  if (filesResponse.response) {
+    gridItems.value = filesResponse.response;
+  }
 
-    if (filesResponse.response) {
-        gridItems.value.length = 0;
-        filesResponse.response.forEach((item: IStorageEntry) => {
-            gridItems.value.push(item);
-        });
-    }
-
-            explorerStore.resetCurrentPath();
-
-    // if (explorerStore.currentPath) {
-    //     const pathSegments = explorerStore.currentPath?.split('\\');
-    //
-    //     if (pathSegments[pathSegments.length - 1] === 'wwwroot')
-    // }
-
-    isLoading.value = false;
+  isLoading.value = false;
 };
 
+const handleCreateFolder = async (folderName: string) => {
+  if (!currentPath.value) return;
+  await explorerApiClient.directories.createDirectoryAsync(currentPath.value, folderName);
+  explorerStore.triggerRefresh();
+};
+
+const handleUploadFile = async (file: File) => {
+  if (!currentPath.value) return;
+  isLoading.value = true;
+  await explorerApiClient.files.uploadFileAsync(file, currentPath.value);
+  explorerStore.triggerRefresh();
+};
+
+const handleOpenFile = (file: StorageFile) => {
+  const downloadUrl = explorerApiClient.files.getDownloadUrl(file.path, true);
+  window.open(downloadUrl, "_blank");
+};
+
+const handleContextMenu = (event: MouseEvent, item: IStorageEntry) => {
+  contextMenuState.value = {
+    isOpen: true,
+    x: event.clientX,
+    y: event.clientY,
+    item
+  };
+};
+
+const handleContextMenuAction = async (action: 'open' | 'download' | 'delete') => {
+  const item = contextMenuState.value.item;
+  if (!item) return;
+
+  if (action === 'open') {
+    if (item.entryType === StorageEntryType.Directory || item.entryType === StorageEntryType.Drive) {
+      explorerStore.setCurrentPath(item.path);
+    } else if (item.entryType === StorageEntryType.File) {
+      handleOpenFile(item as StorageFile);
+    }
+  } else if (action === 'download' && item.entryType === StorageEntryType.File) {
+    const downloadUrl = explorerApiClient.files.getDownloadUrl(item.path, false);
+    window.location.href = downloadUrl;
+  } else if (action === 'delete') {
+    isLoading.value = true;
+    if (item.entryType === StorageEntryType.File) {
+      await explorerApiClient.files.deleteFileAsync(item.path);
+    } else if (item.entryType === StorageEntryType.Directory) {
+      await explorerApiClient.directories.deleteDirectoryAsync(item.path);
+    }
+    explorerStore.triggerRefresh();
+  }
+};
 </script>

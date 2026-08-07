@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FileExploler.Application.FileStorage.Brokers;
 using FileExploler.Application.FileStorage.Models.Storage;
 
@@ -17,7 +17,14 @@ public class DriveBroker : IDriveBroker
     {
         return DriveInfo
             .GetDrives()
-            .Select(drive => _mapper.Map<StorageDrive>(drive))
+            .Where(drive => drive.IsReady)
+            .Select(drive =>
+            {
+                try { return _mapper.Map<StorageDrive>(drive); }
+                catch { return null; }
+            })
+            .Where(drive => drive != null)
+            .Cast<StorageDrive>()
             .AsQueryable();
     }
 }

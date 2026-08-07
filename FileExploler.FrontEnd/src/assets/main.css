@@ -1,33 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  color-scheme: dark;
+}
+
+/* Custom scrollbars with nature moss accent */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 21, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.45);
+}
+
 @layer components {
     .grid-icon {
-        @apply w-20 h-20;
+        @apply w-16 h-16 transition-transform duration-300 group-hover:scale-105;
     }
 
     .container-shadow {
-        @apply bg-blue-800 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-10;
+        @apply bg-[#11221e]/85 backdrop-blur-2xl border border-emerald-950/40 shadow-2xl shadow-emerald-950/30;
     }
 
     .section-shadow {
-        @apply bg-black bg-opacity-20 bg-clip-padding backdrop-filter backdrop-blur-xl;
+        @apply bg-[#0c1815]/75 backdrop-blur-xl border-r border-emerald-900/20;
     }
 
     .transparent-shadow-on {
-        @apply bg-black bg-opacity-10 hover:bg-opacity-25 bg-clip-padding backdrop-filter backdrop-blur-xl transition duration-150;
+        @apply bg-emerald-950/20 hover:bg-emerald-900/30 border border-emerald-800/20 hover:border-emerald-500/30 backdrop-blur-md transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-emerald-950/40;
     }
 
     .transparent-shadow-off {
-        @apply bg-black bg-opacity-0 backdrop-filter bg-clip-padding transition duration-150 hover:bg-opacity-25 hover:backdrop-blur-xl;
+        @apply bg-transparent border border-transparent hover:bg-emerald-950/30 hover:border-emerald-800/30 backdrop-blur-md transition-all duration-200;
     }
 
     .divider-shadow {
-        @apply bg-blue-500 bg-opacity-20 bg-clip-padding backdrop-filter backdrop-blur-xl;
+        @apply bg-emerald-800/20 backdrop-blur-sm;
     }
 
     .card-round {
-        @apply rounded-xl;
+        @apply rounded-2xl;
     }
 }

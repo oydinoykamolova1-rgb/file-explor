@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FileExploler.Application.Common.Models.Filtering;
 using FileExploler.Application.Common.Querying.Extensions;
 using FileExploler.Application.FileStorage.Brokers;
@@ -31,15 +31,32 @@ public class DirectoryService : IDirectoryService
         if (string.IsNullOrWhiteSpace(directoryPath))
             throw new ArgumentNullException(nameof(directoryPath));
 
-        var directories = await Task.Run(() => _broker.GetDirectories(directoryPath).Applypagination(paginationOptions).ToList());
+        var directories = await Task.Run(() => _broker.GetDirectories(directoryPath).ApplyPagination(paginationOptions).ToList());
 
         return directories;
     }
 
     public IEnumerable<string> GetDirectoriesPath(string directoryPath, FilterPagination paginationOptions) =>
-        _broker.GetDirectoriesPath(directoryPath).Applypagination(paginationOptions);
+        _broker.GetDirectoriesPath(directoryPath).ApplyPagination(paginationOptions);
 
     public IEnumerable<string> GetFilesPath(string directoryPath, FilterPagination paginationOptions) =>
-        _broker.GetFilesPath(directoryPath).Applypagination(paginationOptions);
+        _broker.GetFilesPath(directoryPath).ApplyPagination(paginationOptions);
 
+    public ValueTask<StorageDirectory> CreateDirectoryAsync(string directoryPath)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+            throw new ArgumentNullException(nameof(directoryPath));
+
+        var result = _broker.CreateDirectory(directoryPath);
+        return new ValueTask<StorageDirectory>(result);
+    }
+
+    public ValueTask<bool> DeleteDirectoryAsync(string directoryPath, bool recursive = true)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+            throw new ArgumentNullException(nameof(directoryPath));
+
+        _broker.DeleteDirectory(directoryPath, recursive);
+        return new ValueTask<bool>(true);
+    }
 }

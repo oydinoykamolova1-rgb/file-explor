@@ -1,4 +1,4 @@
-﻿using FileExploler.Application.Common.Models.Filtering;
+using FileExploler.Application.Common.Models.Filtering;
 using FileExploler.Application.FileStorage.Models.Filtering;
 using FileExploler.Application.FileStorage.Models.Storage;
 using FileExploler.Application.FileStorage.Services;
@@ -18,32 +18,49 @@ public class FileProcessingService : IFileProcessingService
 
     public async ValueTask<IList<StorageFile>> GetByFilterAsync(StorageFileFilterModel filterModel)
     {
-        var filteredFilesPath = _directoryService
-            .GetFilesPath(filterModel.DirectoryPath, filterModel)
-            .Where(filePath => filterModel.FileTypes.Contains(_fileService.GetFileType(filePath)));
+        if (string.IsNullOrWhiteSpace(filterModel?.DirectoryPath) || !Directory.Exists(filterModel.DirectoryPath))
+            return new List<StorageFile>();
 
-        var files = await _fileService.GetFilesByPathAsync(filteredFilesPath);
+        try
+        {
+            var filteredFilesPath = _directoryService
+                .GetFilesPath(filterModel.DirectoryPath, filterModel)
+                .Where(filePath => filterModel.FileTypes == null || !filterModel.FileTypes.Any() || filterModel.FileTypes.Contains(_fileService.GetFileType(filePath)));
 
-        return files;
+            var files = await _fileService.GetFilesByPathAsync(filteredFilesPath);
+            return files;
+        }
+        catch (Exception)
+        {
+            return new List<StorageFile>();
+        }
     }
 
     public async ValueTask<StorageFileFilterDataModel> GetFilterDataModelAsync(string directoryPath)
     {
-        var pagination = new FilterPagination
+        if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
+            return new StorageFileFilterDataModel { FilterData = new List<StorageFilesSummary>() };
+
+        try
         {
-            PageSize = int.MaxValue,
-            PageToken = 1
-        };
+            var pagination = new FilterPagination
+            {
+                PageSize = 500,
+                PageToken = 1
+            };
 
-        var filePath = _directoryService.GetFilesPath(directoryPath, pagination);
-        var files = await _fileService.GetFilesByPathAsync(filePath);
+            var filePath = _directoryService.GetFilesPath(directoryPath, pagination);
+            var files = await _fileService.GetFilesByPathAsync(filePath);
 
-        var filesSummary = _fileService.GetFilesSummary(files);
-        var filterDataModel = new StorageFileFilterDataModel
+            var filesSummary = _fileService.GetFilesSummary(files);
+            return new StorageFileFilterDataModel
+            {
+                FilterData = filesSummary.ToList()
+            };
+        }
+        catch (Exception)
         {
-            FilterData = filesSummary.ToList()
-        };
-
-        return filterDataModel;
+            return new StorageFileFilterDataModel { FilterData = new List<StorageFilesSummary>() };
+        }
     }
 }

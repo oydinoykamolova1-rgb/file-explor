@@ -1,4 +1,4 @@
-﻿using FileExploler.Application.FileStorage.Models.Storage;
+using FileExploler.Application.FileStorage.Models.Storage;
 
 namespace FileExploler.Application.FileStorage.Brokers;
 
@@ -13,4 +13,8 @@ public interface IDirectoryBroker
     StorageDirectory GetByPathAsync(string directoryPath);
 
     bool ExistAsync(string directoryPath);
+
+    StorageDirectory CreateDirectory(string directoryPath);
+
+    void DeleteDirectory(string directoryPath, bool recursive = true);
 }

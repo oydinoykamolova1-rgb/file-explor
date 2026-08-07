@@ -1,6 +1,6 @@
 import { FilterPagination } from "@/infrastructure/models/filtering/FilterPagination";
 
-export class StorageDriveEntryFilterModel extends FilterPagination {
+export class StorageDirectoryEntryFilterModel extends FilterPagination {
     includeDirectories: boolean;
     includeFiles: boolean;
 
@@ -19,3 +19,5 @@ export class StorageDriveEntryFilterModel extends FilterPagination {
         return params;
     }
 }
+
+export { StorageDirectoryEntryFilterModel as StorageDriveEntryFilterModel };
