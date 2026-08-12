@@ -23,7 +23,24 @@ public class FileService : IFileService
 
     public async ValueTask<IList<StorageFile>> GetFilesByPathAsync(IEnumerable<string> filePath)
     {
-        var files = await Task.Run(() => { return filePath.Select(filePath => _fileBroker.GetByPath(filePath)).ToList(); });
+        var files = await Task.Run(() =>
+        {
+            return filePath
+                .Select(path =>
+                {
+                    try
+                    {
+                        return _fileBroker.GetByPath(path);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                })
+                .Where(file => file != null)
+                .Cast<StorageFile>()
+                .ToList();
+        });
 
         return files;
     }

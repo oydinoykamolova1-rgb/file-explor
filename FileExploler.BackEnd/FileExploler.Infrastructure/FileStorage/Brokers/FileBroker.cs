@@ -15,7 +15,14 @@ public class FileBroker : IFileBroker
 
     public StorageFile GetByPath(string filePath)
     {
-        return _mapper.Map<StorageFile>(new FileInfo(filePath));
+        try
+        {
+            return _mapper.Map<StorageFile>(new FileInfo(filePath));
+        }
+        catch
+        {
+            return null!;
+        }
     }
 
     public bool Exist(string filePath) => File.Exists(filePath);

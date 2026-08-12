@@ -8,8 +8,7 @@ public class DriveProfile : Profile
     public DriveProfile()
     {
         CreateMap<DriveInfo, StorageDrive>()
-            .ForMember(src => src.Name, opt => opt.MapFrom(dest =>
-                string.IsNullOrWhiteSpace(dest.VolumeLabel) ? dest.Name.TrimEnd('\\') : dest.VolumeLabel))
+            .ForMember(src => src.Name, opt => opt.MapFrom(dest => GetDriveDisplayName(dest)))
             .ForMember(src => src.Label, opt => opt.MapFrom(dest =>
                 dest.Name.Contains(':') ? dest.Name.Substring(0, dest.Name.IndexOf(':')) : dest.Name.TrimEnd('\\')))
             .ForMember(src => src.Path, opt => opt.MapFrom(dest => dest.Name))
@@ -19,5 +18,21 @@ public class DriveProfile : Profile
             .ForMember(src => src.FreeSpace, opt => opt.MapFrom(dest => dest.IsReady ? dest.AvailableFreeSpace : 0))
             .ForMember(src => src.UnavailableSpace, opt => opt.MapFrom(dest => dest.IsReady ? (dest.TotalFreeSpace - dest.AvailableFreeSpace) : 0))
             .ForMember(src => src.UsedSpace, opt => opt.MapFrom(dest => dest.IsReady ? (dest.TotalSize - dest.TotalFreeSpace) : 0));
+    }
+
+    private static string GetDriveDisplayName(DriveInfo drive)
+    {
+        var driveLetter = drive.Name.TrimEnd('\\');
+        if (!drive.IsReady)
+            return $"Drive ({driveLetter})";
+
+        if (string.IsNullOrWhiteSpace(drive.VolumeLabel) || 
+            drive.VolumeLabel.Equals("Windows 11", StringComparison.OrdinalIgnoreCase) ||
+            drive.VolumeLabel.Equals("Windows", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Local Disk ({driveLetter})";
+        }
+
+        return $"{drive.VolumeLabel} ({driveLetter})";
     }
 }

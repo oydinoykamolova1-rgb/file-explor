@@ -18,11 +18,50 @@ public class DirectoryBroker : IDirectoryBroker
     public StorageDirectory GetByPathAsync(string directoryPath) => _mapper.Map<StorageDirectory>(new DirectoryInfo(directoryPath));
 
     public IEnumerable<StorageDirectory> GetDirectories(string directoryPath) => GetDirectoriesPath(directoryPath)
-        .Select(path => _mapper.Map<StorageDirectory>(new DirectoryInfo(path)));
+        .Select(path =>
+        {
+            try
+            {
+                return _mapper.Map<StorageDirectory>(new DirectoryInfo(path));
+            }
+            catch
+            {
+                return null;
+            }
+        })
+        .Where(dir => dir != null)!;
 
-    public IEnumerable<string> GetDirectoriesPath(string directoryPath) => Directory.EnumerateDirectories(directoryPath);
+    public IEnumerable<string> GetDirectoriesPath(string directoryPath)
+    {
+        try
+        {
+            return Directory.EnumerateDirectories(directoryPath, "*", new EnumerationOptions
+            {
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = false
+            });
+        }
+        catch
+        {
+            return Enumerable.Empty<string>();
+        }
+    }
 
-    public IEnumerable<string> GetFilesPath(string directoryPath) => Directory.EnumerateFiles(directoryPath);
+    public IEnumerable<string> GetFilesPath(string directoryPath)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(directoryPath, "*", new EnumerationOptions
+            {
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = false
+            });
+        }
+        catch
+        {
+            return Enumerable.Empty<string>();
+        }
+    }
 
     public StorageDirectory CreateDirectory(string directoryPath)
     {

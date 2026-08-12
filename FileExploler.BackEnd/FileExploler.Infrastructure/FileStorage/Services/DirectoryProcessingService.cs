@@ -22,24 +22,26 @@ public class DirectoryProcessingService : IDirectoryProcessingService
         if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
             return storageItems;
 
-        try
+        if (filterModel.IncludeDirectories)
         {
-            if (filterModel.IncludeDirectories)
+            try
             {
                 var dirs = await _directoryService.GetDirectoriesAsync(directoryPath, filterModel);
-                storageItems.AddRange(dirs);
+                if (dirs != null) storageItems.AddRange(dirs);
             }
+            catch (Exception) { }
+        }
 
-            if (filterModel.IncludeFiles)
+        if (filterModel.IncludeFiles)
+        {
+            try
             {
                 var filesPath = _directoryService.GetFilesPath(directoryPath, filterModel);
                 var files = await _fileService.GetFilesByPathAsync(filesPath);
-                storageItems.AddRange(files);
+                if (files != null) storageItems.AddRange(files);
             }
+            catch (Exception) { }
         }
-        catch (UnauthorizedAccessException) { }
-        catch (DirectoryNotFoundException) { }
-        catch (Exception) { }
 
         return storageItems;
     }
@@ -53,18 +55,28 @@ public class DirectoryProcessingService : IDirectoryProcessingService
         try
         {
             var dirInfo = new DirectoryInfo(directoryPath);
-            var matchingDirs = dirInfo.EnumerateDirectories($"*{searchPattern}*", SearchOption.TopDirectoryOnly);
+            var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false };
+
+            var matchingDirs = dirInfo.EnumerateDirectories($"*{searchPattern}*", enumOptions);
             foreach (var dir in matchingDirs.Take(50))
             {
-                var storageDir = await _directoryService.GetByPathAsync(dir.FullName);
-                if (storageDir != null) result.Add(storageDir);
+                try
+                {
+                    var storageDir = await _directoryService.GetByPathAsync(dir.FullName);
+                    if (storageDir != null) result.Add(storageDir);
+                }
+                catch (Exception) { }
             }
 
-            var matchingFiles = dirInfo.EnumerateFiles($"*{searchPattern}*", SearchOption.TopDirectoryOnly);
+            var matchingFiles = dirInfo.EnumerateFiles($"*{searchPattern}*", enumOptions);
             foreach (var file in matchingFiles.Take(50))
             {
-                var storageFile = await _fileService.GetFilesByPathAsync(file.FullName);
-                if (storageFile != null) result.Add(storageFile);
+                try
+                {
+                    var storageFile = await _fileService.GetFilesByPathAsync(file.FullName);
+                    if (storageFile != null) result.Add(storageFile);
+                }
+                catch (Exception) { }
             }
         }
         catch (Exception) { }

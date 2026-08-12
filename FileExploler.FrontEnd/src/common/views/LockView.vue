@@ -37,6 +37,7 @@
               <div class="absolute bottom-1 right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-[#11221e] shadow-md"></div>
             </div>
 
+
             <!-- Username -->
             <div class="text-center">
               <h2 class="text-2xl font-bold text-emerald-100 tracking-wide">Oydinoy</h2>
