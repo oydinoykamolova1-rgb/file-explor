@@ -8,7 +8,7 @@ export class ExplorerApiClient {
     public readonly baseUrl: string;
 
     constructor() {
-        this.baseUrl = "https://localhost:7157";
+        this.baseUrl = import.meta.env.VITE_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "https://localhost:7157" : "");
 
         this.client = new ApiClientBase({
             baseURL: this.baseUrl

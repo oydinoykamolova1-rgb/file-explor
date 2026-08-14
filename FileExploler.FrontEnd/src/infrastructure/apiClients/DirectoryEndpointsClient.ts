@@ -28,7 +28,7 @@ export class DirectoryEndpointsClient {
     }
 
     public async createDirectoryAsync(path: string, name: string) {
-        return await this.client.postAsync<any, IStorageEntry>("api/directories", { path, name });
+        return await this.client.postAsync<IStorageEntry>("api/directories", { path, name });
     }
 
     public async deleteDirectoryAsync(directoryPath: string) {

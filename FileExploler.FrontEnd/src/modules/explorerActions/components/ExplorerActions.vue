@@ -85,9 +85,6 @@ const loadFilesFilterDataAsync = async () => {
 
 const loadFilesAsync = async (fileType: StorageFileType) => {
   const filterOptions = new StorageFileFilterModel(10000, 1, [fileType]);
-  if (currentPath.value) {
-    filterOptions.DirectoryPath = currentPath.value;
-  }
   explorerStore.setCurrentFilesFilterModel(filterOptions);
 };
 </script>

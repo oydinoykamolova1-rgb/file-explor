@@ -25,7 +25,7 @@ export class FileEndpointsClient {
         formData.append("file", file);
         formData.append("directoryPath", directoryPath);
 
-        return await this.client.postAsync<FormData, StorageFile>("api/files/upload", formData);
+        return await this.client.postAsync<StorageFile>("api/files/upload", formData);
     }
 
     public async deleteFileAsync(filePath: string) {

@@ -1,4 +1,4 @@
-import { IStorageEntry } from "@/infrastructure/models/entities/IStorageEntry";
+import type { IStorageEntry } from "@/infrastructure/models/entities/IStorageEntry";
 import type { StorageEntryType } from "@/infrastructure/models/entities/StorageItemType";
 
 export class StorageFile implements IStorageEntry {

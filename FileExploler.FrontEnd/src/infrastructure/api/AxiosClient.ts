@@ -1,6 +1,5 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import axios, { AxiosError } from "axios";
-import type { IMappable } from "@/infrastructure/models/entities/iMappable";
 import { ApiResponse } from "@/infrastructure/api/ApiResponse";
 import type { ProblemDetails } from "@/infrastructure/api/ProblemDetails";
 
@@ -26,7 +25,7 @@ export default class ApiClientBase {
         );
     }
 
-    public async getAsync<TResponse extends IMappable<TResponse>>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+    public async getAsync<TResponse>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
         return (await this.client.get<ApiResponse<TResponse>>(url, config)).data;
     }
 

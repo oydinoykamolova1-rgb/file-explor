@@ -1,4 +1,4 @@
-﻿using FileExploler.Application.FileStorage.Brokers;
+using FileExploler.Application.FileStorage.Brokers;
 using FileExploler.Application.FileStorage.Models.Settings;
 using FileExploler.Application.FileStorage.Services;
 using FileExploler.Infrastructure.FileStorage.Brokers;
@@ -110,7 +110,9 @@ public static partial class HostConfiguration
 
     private static WebApplication UseFileStorage(this WebApplication app)
     {
+        app.UseDefaultFiles();
         app.UseStaticFiles();
+        app.MapFallbackToFile("index.html");
 
         return app;
     }

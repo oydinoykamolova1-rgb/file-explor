@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Chart, ChartItem, DoughnutController, ArcElement, Tooltip } from "chart.js";
+import { Chart, type ChartItem, DoughnutController, ArcElement, Tooltip } from "chart.js";
 import { onMounted, ref, computed } from "vue";
 import type { StorageDrive } from "@/infrastructure/models/entities/StorageDrive";
 import { ExplorerLocationService } from "@/infrastructure/services/explorerLocationService";
