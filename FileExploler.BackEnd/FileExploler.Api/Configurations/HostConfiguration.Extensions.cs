@@ -104,6 +104,7 @@ public static partial class HostConfiguration
     private static WebApplication MapRoutes(this WebApplication app)
     {
         app.MapControllers();
+        app.MapFallbackToFile("index.html");
 
         return app;
     }
@@ -112,7 +113,6 @@ public static partial class HostConfiguration
     {
         app.UseDefaultFiles();
         app.UseStaticFiles();
-        app.MapFallbackToFile("index.html");
 
         return app;
     }

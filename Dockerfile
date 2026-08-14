@@ -17,6 +17,7 @@ COPY --from=frontend-build /src/frontend/dist ./FileExploler.BackEnd/FileExplole
 
 WORKDIR /src/FileExploler.BackEnd/FileExploler.Api
 RUN dotnet publish FileExploler.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
+COPY --from=frontend-build /src/frontend/dist /app/publish/wwwroot/
 
 # Step 3: Final Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final

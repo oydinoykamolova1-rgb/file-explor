@@ -1,4 +1,4 @@
-﻿namespace FileExploler.Api.Configurations;
+namespace FileExploler.Api.Configurations;
 
 public static partial class HostConfiguration
 {
@@ -18,9 +18,9 @@ public static partial class HostConfiguration
     public static ValueTask<WebApplication> ConfigureAsync(this WebApplication app)
     {
         app.UseDevTools();
-        app.MapRoutes();
         app.UseCustomCors();
-        app.UseStaticFiles();
+        app.UseFileStorage();
+        app.MapRoutes();
 
         return new ValueTask<WebApplication>(app);
     }
