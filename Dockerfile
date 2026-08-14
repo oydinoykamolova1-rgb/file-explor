@@ -12,12 +12,11 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
 COPY FileExploler.BackEnd/ ./FileExploler.BackEnd/
-# Copy built Vue static files into backend wwwroot
-COPY --from=frontend-build /src/frontend/dist ./FileExploler.BackEnd/FileExploler.Api/wwwroot/
+RUN mkdir -p ./FileExploler.BackEnd/FileExploler.Api/wwwroot
+COPY --from=frontend-build /src/frontend/dist/ ./FileExploler.BackEnd/FileExploler.Api/wwwroot/
 
 WORKDIR /src/FileExploler.BackEnd/FileExploler.Api
 RUN dotnet publish FileExploler.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
-COPY --from=frontend-build /src/frontend/dist /app/publish/wwwroot/
 
 # Step 3: Final Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
