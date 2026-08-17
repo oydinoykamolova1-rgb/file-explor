@@ -63,7 +63,8 @@ public class DirectoriesController : ControllerBase
         if (dto == null || string.IsNullOrWhiteSpace(dto.Path) || string.IsNullOrWhiteSpace(dto.Name))
             return BadRequest("Path and Name are required.");
 
-        var fullPath = System.IO.Path.Combine(dto.Path, dto.Name);
+        var basePath = dto.Path.EndsWith(":") ? dto.Path + "\\" : dto.Path;
+        var fullPath = System.IO.Path.Combine(basePath, dto.Name);
         var created = await _directoryService.CreateDirectoryAsync(fullPath);
         return Ok(created);
     }

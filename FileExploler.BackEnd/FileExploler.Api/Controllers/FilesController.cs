@@ -75,7 +75,12 @@ public class FilesController : ControllerBase
 
         if (inline)
         {
-            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{fileName}\"");
+            var cd = new System.Net.Mime.ContentDisposition
+            {
+                FileName = fileName,
+                Inline = true
+            };
+            Response.Headers.Append("Content-Disposition", cd.ToString());
             return File(stream, contentType);
         }
 

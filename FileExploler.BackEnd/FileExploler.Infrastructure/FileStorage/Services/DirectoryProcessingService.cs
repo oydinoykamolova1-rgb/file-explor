@@ -55,7 +55,7 @@ public class DirectoryProcessingService : IDirectoryProcessingService
         try
         {
             var dirInfo = new DirectoryInfo(directoryPath);
-            var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false };
+            var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false, MatchCasing = MatchCasing.CaseInsensitive };
 
             var matchingDirs = dirInfo.EnumerateDirectories($"*{searchPattern}*", enumOptions);
             foreach (var dir in matchingDirs.Take(50))

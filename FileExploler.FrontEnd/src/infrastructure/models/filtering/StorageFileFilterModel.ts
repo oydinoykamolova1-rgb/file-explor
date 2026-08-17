@@ -2,23 +2,24 @@ import { FilterPagination } from "@/infrastructure/models/filtering/FilterPagina
 import type { StorageFileType } from "@/infrastructure/models/filtering/StorageFileType";
 
 export class StorageFileFilterModel extends FilterPagination {
-    filesType!: Array<StorageFileType>;
+    directoryPath?: string;
+    fileTypes: Array<StorageFileType>;
 
-    constructor(pageSize: number, pageToken: number, filesType: Array<StorageFileType>) {
+    constructor(pageSize: number, pageToken: number, fileTypes: Array<StorageFileType>, directoryPath?: string) {
         super(pageSize, pageToken);
-
-        console.log('file types', filesType);
-
-        this.filesType = filesType;
+        this.fileTypes = fileTypes;
+        this.directoryPath = directoryPath;
     }
 
     override convertToQueryParams(): URLSearchParams {
         const params = super.convertToQueryParams();
-        params.append("filesType", this.filesType.join(","));
-
-        // console.log(this.filesType.map(x => x.toString()).join(","));
-        // console.log(params.toString());
+        if (this.directoryPath) {
+            params.append("directoryPath", this.directoryPath);
+        }
+        if (this.fileTypes && this.fileTypes.length > 0) {
+            this.fileTypes.forEach(ft => params.append("fileTypes", ft.toString()));
+        }
 
         return params;
     }
-}
+}

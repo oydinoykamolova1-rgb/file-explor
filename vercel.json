@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd FileExploler.FrontEnd && npm install && npm run build",
+  "outputDirectory": "FileExploler.FrontEnd/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

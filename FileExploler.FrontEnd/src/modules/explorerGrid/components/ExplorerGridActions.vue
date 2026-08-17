@@ -161,7 +161,10 @@ const handleBackAction = () => {
     const normPath = explorerStore.currentPath.replace(/\//g, '\\');
     const pathSegments = normPath.split('\\').filter(p => p.trim() !== '');
     if (pathSegments.length > 1) {
-      const parentPath = pathSegments.slice(0, -1).join('\\');
+      let parentPath = pathSegments.slice(0, -1).join('\\');
+      if (parentPath.endsWith(':')) {
+        parentPath += '\\';
+      }
       explorerStore.setCurrentPath(parentPath);
     } else {
       explorerStore.setCurrentPath(null);
